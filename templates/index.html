@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Recognition & Calorie Estimator - Home</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dark-theme">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-custom shadow-lg">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-cup-hot text-red-accent me-2"></i>
+                Food Recognition & Calorie Estimator
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-10">
+                    <h1 class="display-2 fw-bold mb-4 text-white">
+                        <span class="text-red-accent">AI-Powered</span> Food Recognition
+                    </h1>
+                    <p class="lead text-light mb-5">
+                        Upload food images and get instant recognition with detailed nutrition information. 
+                        Powered by advanced machine learning technology.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Info Buttons Section -->
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h2 class="text-center text-white mb-5">
+                    <i class="bi bi-info-circle text-red-accent me-2"></i>Project Features
+                </h2>
+                
+                <!-- Floating Animated Buttons Grid -->
+                <div class="floating-buttons-grid">
+                    <!-- Feature 1 -->
+                    <div class="floating-btn-card" data-delay="0">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-camera-fill"></i>
+                            </div>
+                            <h4>Image Upload</h4>
+                            <p>Upload food images in multiple formats (JPG, PNG, GIF, BMP)</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="floating-btn-card" data-delay="0.1">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <h4>AI Recognition</h4>
+                            <p>Advanced deep learning model identifies food items instantly</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="floating-btn-card" data-delay="0.2">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-speedometer2"></i>
+                            </div>
+                            <h4>Confidence Score</h4>
+                            <p>Get accuracy percentage for each food prediction</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="floating-btn-card" data-delay="0.3">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <h4>Nutrition Info</h4>
+                            <p>Detailed calories, protein, carbs, and fat information</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 5 -->
+                    <div class="floating-btn-card" data-delay="0.4">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-calculator"></i>
+                            </div>
+                            <h4>Portion Control</h4>
+                            <p>Adjust portion size (50-500g) for accurate calorie calculation</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 6 -->
+                    <div class="floating-btn-card" data-delay="0.5">
+                        <div class="floating-btn-content">
+                            <div class="floating-btn-icon">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <h4>Mobile Friendly</h4>
+                            <p>Fully responsive design works on all devices</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Button -->
+                <div class="text-center mt-5">
+                    <a href="/dashboard" class="btn-dashboard">
+                        <span class="btn-dashboard-text">
+                            <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                        </span>
+                        <span class="btn-dashboard-effect"></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tech Stack Section -->
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="tech-stack-card">
+                    <h3 class="text-white mb-4">
+                        <i class="bi bi-code-slash text-red-accent me-2"></i>Technology Stack
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="tech-item">
+                                <i class="bi bi-server text-red-accent me-2"></i>
+                                <strong>Backend:</strong> Flask (Python)
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="tech-item">
+                                <i class="bi bi-cpu text-red-accent me-2"></i>
+                                <strong>AI Model:</strong> TensorFlow/Keras
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="tech-item">
+                                <i class="bi bi-layout-text-window text-red-accent me-2"></i>
+                                <strong>Frontend:</strong> HTML5, CSS3, JavaScript
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="tech-item">
+                                <i class="bi bi-palette text-red-accent me-2"></i>
+                                <strong>UI Framework:</strong> Bootstrap 5
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-dark mt-5">
+        <div class="container text-center py-4">
+            <p class="text-muted mb-0">
+                <i class="bi bi-heart-fill text-red-accent me-1"></i>
+                &copy; 2024 Food Recognition & Calorie Estimator. Powered by AI.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
