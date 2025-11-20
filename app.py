@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 import requests
+import tensorflow
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
 from tensorflow import keras
@@ -41,29 +42,72 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# def load_model_and_data():
+#     """Load model and corrected class indices"""
+#     global model, class_indices
+#     try:
+#         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fine_tuned_food_model.h5")
+#         if os.path.exists(model_path):
+#             model = keras.models.load_model(model_path)
+#             print("✅ Fine-tuned model loaded successfully!")
+#         else:
+#             print(f"❌ Model file {model_path} not found!")
+
+#         if os.path.exists("class_indices.json"):
+#             with open("class_indices.json", "r") as f:
+#                 class_indices_data = json.load(f)
+#             # Convert {food_name: index} → {index: food_name}
+#             class_indices = {int(v): k for k, v in class_indices_data.items()}
+#             print(f"✅ Class indices loaded successfully! Total classes: {len(class_indices)}")
+#         else:
+#             print("⚠️ class_indices.json not found — predictions may be unnamed.")
+#             class_indices = {}
+
+#     except Exception as e:
+#         print(f"❌ Error loading model/data: {e}")
+
 def load_model_and_data():
-    """Load model and corrected class indices"""
     global model, class_indices
     try:
-        model_path = 'fine_tuned_food_model.h5'
-        if os.path.exists(model_path):
-            model = keras.models.load_model(model_path)
-            print("✅ Fine-tuned model loaded successfully!")
-        else:
-            print(f"❌ Model file {model_path} not found!")
+        print("🔧 Rebuilding MobileNetV2 architecture...")
 
+        # === Rebuild Architecture EXACTLY as training ===
+        base_model = tensorflow.keras.applications.MobileNetV2(
+            weights="imagenet",
+            include_top=False,
+            input_shape=(224, 224, 3)
+        )
+
+        x = base_model.output
+        x = tensorflow.keras.layers.GlobalAveragePooling2D()(x)
+        x = tensorflow.keras.layers.Dense(256, activation='relu')(x)
+        predictions = tensorflow.keras.layers.Dense(101, activation='softmax')(x)
+
+        rebuilt_model = tensorflow.keras.Model(inputs=base_model.input, outputs=predictions)
+
+        # === Load weights from your .h5 file ===
+        weights_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "fine_tuned_food_model.h5")
+
+        print(f"📂 Loading weights from: {weights_path}")
+        rebuilt_model.load_weights(weights_path)
+
+        model = rebuilt_model
+        print("✅ Weight-loaded model ready!")
+
+        # Load class indices
         if os.path.exists("class_indices.json"):
             with open("class_indices.json", "r") as f:
-                class_indices_data = json.load(f)
-            # Convert {food_name: index} → {index: food_name}
-            class_indices = {int(v): k for k, v in class_indices_data.items()}
-            print(f"✅ Class indices loaded successfully! Total classes: {len(class_indices)}")
+                class_indices_raw = json.load(f)
+            class_indices = {v: k for k, v in class_indices_raw.items()}
+            print("📦 Class indices loaded!")
         else:
-            print("⚠️ class_indices.json not found — predictions may be unnamed.")
+            print("⚠ class_indices.json missing")
             class_indices = {}
 
     except Exception as e:
-        print(f"❌ Error loading model/data: {e}")
+        print("❌ Error rebuilding model:", e)
+
 
 
 def preprocess_image(img_path, target_size=(224, 224)):
@@ -182,16 +226,22 @@ def get_nutrition_info(food_name, portion_size=100):
 
 class MealLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
+    # Food details
     food_name = db.Column(db.String(120), nullable=False)
     calories = db.Column(db.Float, nullable=False)
     protein = db.Column(db.Float)
     carbs = db.Column(db.Float)
     fat = db.Column(db.Float)
-    portion_size = db.Column(db.Integer)
-    logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Portion size
+    portion_size = db.Column(db.Integer, default=100)
+
+    # Local system time (NOT UTC)
+    logged_at = db.Column(db.DateTime, default=datetime.now)
 
     def __repr__(self):
-        return f"<Meal {self.food_name} ({self.calories} kcal)>"
+        return f"<MealLog {self.food_name} - {self.calories} kcal>"
 
 # ========================== Flask Routes ==========================
 @app.route('/')
@@ -199,9 +249,67 @@ def index():
     return render_template('index.html')
 
 
+from datetime import datetime, date, timedelta
+import pytz   # If not installed: pip install pytz
+
+
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    try:
+        # === 1️⃣ Timezone Fix: Set to IST ===
+        IST = pytz.timezone("Asia/Kolkata")
+        today = datetime.now(IST).date()
+
+        # === 2️⃣ Get all meals logged today ===
+        start_today = datetime(today.year, today.month, today.day, tzinfo=IST)
+        meals_today = MealLog.query.filter(MealLog.logged_at >= start_today).order_by(MealLog.logged_at).all()
+
+        # === 3️⃣ Calculate today's totals ===
+        daily_calories = sum(m.calories for m in meals_today)
+        daily_protein = sum(m.protein for m in meals_today)
+        daily_carbs = sum(m.carbs for m in meals_today)
+        daily_fat = sum(m.fat for m in meals_today)
+
+        # === 4️⃣ Daily Chart Data ===
+        daily_labels = [m.food_name for m in meals_today]
+        daily_calories_list = [m.calories for m in meals_today]
+
+        # === 5️⃣ Weekly Chart Data ===
+        weekly_labels = []
+        weekly_values = []
+
+        for i in range(6, -1, -1):  # Last 7 days
+            day = today - timedelta(days=i)
+            day_start = datetime(day.year, day.month, day.day, tzinfo=IST)
+            day_end = day_start + timedelta(days=1)
+
+            meals_day = MealLog.query.filter(
+                MealLog.logged_at >= day_start,
+                MealLog.logged_at < day_end
+            ).all()
+
+            total_day = sum(m.calories for m in meals_day)
+
+            weekly_labels.append(day.strftime("%b %d"))
+            weekly_values.append(round(total_day, 1))
+
+        # === 6️⃣ Render Page ===
+        return render_template(
+            "dashboard.html",
+            daily_calories=daily_calories,
+            daily_protein=daily_protein,
+            daily_carbs=daily_carbs,
+            daily_fat=daily_fat,
+            daily_labels=daily_labels,
+            daily_calories_list=daily_calories_list,
+            weekly_labels=weekly_labels,
+            weekly_values=weekly_values,
+            meals_today=meals_today
+        )
+
+    except Exception as e:
+        print("❌ Error loading dashboard:", e)
+        return "Dashboard error"
 
 
 @app.route('/predict', methods=['POST'])
@@ -250,6 +358,8 @@ def predict():
         print(f"Error in /predict route: {e}")
         return jsonify({'error': str(e)}), 500
     
+
+    
 @app.route('/weekly_summary')
 def weekly_summary():
     try:
@@ -294,7 +404,7 @@ def weekly_summary():
         return f"Error: {e}", 500
 
     
-@app.route('/log_meal', methods=['POST'])
+@app.route('/log_meal', methods=['POST', 'GET'])
 def log_meal():
     try:
         food_name = request.form['food_name']
