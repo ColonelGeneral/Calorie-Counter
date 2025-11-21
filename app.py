@@ -363,35 +363,38 @@ def predict():
 @app.route('/weekly_summary')
 def weekly_summary():
     try:
-        # Determine date range: today and 6 days earlier
         today = date.today()
         start_date = today - timedelta(days=6)
 
-        # Query all meals from last 7 days
-        meals = MealLog.query.filter(MealLog.logged_at >= datetime(start_date.year, start_date.month, start_date.day)).all()
+        # Fetch all meals from the last 7 days
+        meals = MealLog.query.filter(
+            MealLog.logged_at >= datetime(start_date.year, start_date.month, start_date.day)
+        ).all()
 
-        # Prepare a dictionary keyed by date
+        # Prepare dictionary: date → calories
         daily_totals = {}
+
         for i in range(7):
             d = start_date + timedelta(days=i)
-            daily_totals[d] = 0  # initialize
+            daily_totals[d] = 0   # initialize with zero
 
-        # Sum calories by day
+        # Sum calories PER DAY (ignore food name)
         for meal in meals:
-            meal_day = meal.logged_at.date()
-            if meal_day in daily_totals:
-                daily_totals[meal_day] += meal.calories
+            meal_date = meal.logged_at.date()
+            if meal_date in daily_totals:
+                daily_totals[meal_date] += meal.calories
 
-        # Convert to template-friendly list
-        weekly_data = []
-        for d, total in daily_totals.items():
-            weekly_data.append({
+        # Convert to list for template
+        weekly_data = [
+            {
                 "date": d.strftime("%Y-%m-%d"),
                 "calories": round(total, 1)
-            })
+            }
+            for d, total in daily_totals.items()
+        ]
 
-        # Weekly total
-        weekly_total = round(sum(item["calories"] for item in weekly_data), 1)
+        # Total weekly calories
+        weekly_total = round(sum(x["calories"] for x in weekly_data), 1)
 
         return render_template(
             "weekly_summary.html",
@@ -436,19 +439,42 @@ def history():
     meals = MealLog.query.order_by(MealLog.logged_at.desc()).all()
     return render_template("history.html", meals=meals)
 
-
 @app.route('/daily_summary')
 def daily_summary():
     today = date.today()
     start = datetime(today.year, today.month, today.day)
 
     meals = MealLog.query.filter(MealLog.logged_at >= start).all()
-    total_calories = sum(m.calories for m in meals)
 
-    return render_template("summary.html",
-                           total=total_calories,
-                           count=len(meals),
-                           meals=meals)
+    # FIX: Normalize food names to avoid duplicates
+    merged = {}
+    for m in meals:
+        name = m.food_name.strip().lower()    # normalize
+        if name not in merged:
+            merged[name] = {
+                "food_name": m.food_name.title().strip(),
+                "calories": 0,
+                "protein": 0,
+                "carbs": 0,
+                "fat": 0
+            }
+        merged[name]["calories"] += m.calories
+        merged[name]["protein"] += m.protein
+        merged[name]["carbs"] += m.carbs
+        merged[name]["fat"] += m.fat
+
+    # Convert to list
+    merged_meals = list(merged.values())
+
+    total_calories = sum(item["calories"] for item in merged_meals)
+
+    return render_template(
+        "summary.html",
+        total=total_calories,
+        count=len(merged_meals),
+        meals=merged_meals
+    )
+
 
 
 

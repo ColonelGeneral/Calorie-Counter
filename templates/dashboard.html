@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Food Recognition & Calorie Estimator</title>
 
-    <!-- Bootstrap 5 CSS -->
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <!-- Chart.js -->
@@ -22,101 +22,82 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark-custom shadow-lg">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-cup-hot text-red-accent me-2"></i>
-                Food Recognition & Calorie Estimator
+                <i class="bi bi-cup-hot text-red-accent me-2"></i> Food Recognition & Calorie Estimator
             </a>
 
             <div class="navbar-nav ms-auto">
-                <a class="nav-link text-white" href="/dashboard">
-                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
-                </a>
-                <a class="nav-link text-white" href="/history">
-                    <i class="bi bi-clock-history me-1"></i>History
-                </a>
-                <a class="nav-link text-white" href="/daily_summary">
-                    <i class="bi bi-list-check me-1"></i>Summary
-                </a>
+                <a class="nav-link text-white" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                <a class="nav-link text-white" href="/history"><i class="bi bi-clock-history me-1"></i>History</a>
+                <a class="nav-link text-white" href="/daily_summary"><i class="bi bi-list-check me-1"></i>Summary</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Container -->
     <div class="container mt-5 mb-5">
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10">
 
                 <!-- Header -->
-                <div class="text-center mb-5">
-                    <h1 class="display-4 fw-bold text-white mb-3">
-                        <i class="bi bi-speedometer2 text-red-accent me-2"></i>
-                        Dashboard
-                    </h1>
-                    <p class="lead text-light">Analyze food and track calories using AI</p>
+                <div class="text-center mb-4">
+                    <h1 class="display-4 fw-bold text-white"><i class="bi bi-speedometer2 text-red-accent me-2"></i>Dashboard</h1>
+                    <p class="lead text-light">Analyze food and track calories</p>
                 </div>
 
-                <!-- ==================== DAILY SUMMARY ==================== -->
+                <!-- Calorie Summary -->
                 <div class="card-dark shadow-lg border-0 mb-5">
                     <div class="card-body p-4">
+
                         <h4 class="text-white mb-3">
                             <i class="bi bi-graph-up-arrow text-red-accent me-2"></i>
                             Today's Calorie Summary
                         </h4>
 
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between">
                             <span class="text-light">Calories Consumed:</span>
                             <span class="fw-bold text-red-accent fs-4">{{ daily_calories }} kcal</span>
                         </div>
 
                         {% set goal = 2000 %}
                         {% set progress = (daily_calories / goal) * 100 %}
-                        <div class="progress-dark" style="height: 30px;">
+
+                        <div class="progress-dark mt-3" style="height: 30px;">
                             <div class="progress-bar-red"
-                                 role="progressbar"
-                                 style="width: {{ progress }}%;"
-                                 aria-valuenow="{{ progress }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
+                                style="width: {{ progress }}%;"
+                                role="progressbar">
                                 {{ progress|round(1) }}%
                             </div>
                         </div>
-                        <p class="text-light mt-2 small">Goal: {{ goal }} kcal</p>
+
                     </div>
                 </div>
 
-                <!-- ==================== DAILY CHART ==================== -->
-                <div class="card-dark shadow-lg border-0 mb-5 p-4">
-                    <h4 class="text-white mb-3">
-                        <i class="bi bi-bar-chart text-red-accent me-2"></i>
-                        Today's Meal Breakdown
-                    </h4>
-
-                    <canvas id="dailyChart"></canvas>
+                <!-- DAILY CHART -->
+                <div class="card-dark shadow-lg border-0 mb-5">
+                    <div class="card-body">
+                        <h4 class="text-white mb-3"><i class="bi bi-bar-chart-line text-red-accent me-2"></i>Daily Intake</h4>
+                        <canvas id="dailyChart" height="120"></canvas>
+                    </div>
                 </div>
 
-                <!-- ==================== WEEKLY CHART ==================== -->
-                <div class="card-dark shadow-lg border-0 mb-5 p-4">
-                    <h4 class="text-white mb-3">
-                        <i class="bi bi-calendar-week text-red-accent me-2"></i>
-                        Weekly Calorie Intake
-                    </h4>
-
-                    <canvas id="weeklyChart"></canvas>
+                <!-- WEEKLY CHART -->
+                <div class="card-dark shadow-lg border-0 mb-5">
+                    <div class="card-body">
+                        <h4 class="text-white mb-3"><i class="bi bi-calendar-week text-red-accent me-2"></i>Weekly Intake</h4>
+                        <canvas id="weeklyChart" height="120"></canvas>
+                    </div>
                 </div>
 
-                <!-- ==================== UPLOAD SECTION (RESTORED) ==================== -->
+                <!-- UPLOAD SECTION -->
                 <div class="card-dark shadow-lg border-0">
                     <div class="card-body p-5">
                         <form id="uploadForm" method="POST" action="/predict" enctype="multipart/form-data">
 
                             <div class="upload-area-dark mb-4" id="uploadArea">
-
-                                <input type="file" name="file" id="fileInput" accept="image/*"
-                                       class="d-none" required>
+                                <input type="file" name="file" id="fileInput" accept="image/*" class="d-none" required>
 
                                 <div class="text-center py-5">
                                     <i class="bi bi-cloud-upload display-1 text-red-accent mb-3"></i>
-                                    <h4 class="mb-3 text-white">Upload Your Food Image</h4>
-                                    <p class="text-light mb-3">Supported: JPG, PNG, GIF, BMP (Max 16MB)</p>
+                                    <h4 class="mb-3 text-white">Upload Image</h4>
 
                                     <button type="button" class="btn btn-red btn-lg" id="chooseFileBtn">
                                         <i class="bi bi-folder2-open me-2"></i>Choose File
@@ -124,31 +105,26 @@
                                 </div>
 
                                 <div id="imagePreview" class="d-none mt-3">
-                                    <img id="previewImg" src="" alt="Preview"
-                                         class="img-fluid rounded">
+                                    <img id="previewImg" src="" class="img-fluid rounded">
                                     <button type="button" class="btn btn-red-outline btn-sm mt-2" id="removeImageBtn">
                                         <i class="bi bi-x-circle me-1"></i>Remove Image
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- Portion Size -->
                             <div class="mb-4">
-                                <label class="form-label fw-bold text-white">
-                                    Portion Size (grams)
-                                </label>
-                                <input type="range" name="portion_size" id="portionSize" class="form-range-dark"
+                                <label class="form-label fw-bold text-white">Portion Size (grams)</label>
+                                <input type="range" class="form-range-dark" id="portionSize" name="portion_size"
                                        min="50" max="500" value="100" step="10">
                                 <div class="d-flex justify-content-between">
                                     <span class="text-light small">50g</span>
-                                    <span id="portionSizeValue" class="fw-bold text-red-accent">100g</span>
+                                    <span class="fw-bold text-red-accent" id="portionSizeValue">100g</span>
                                     <span class="text-light small">500g</span>
                                 </div>
                             </div>
 
-                            <!-- Analyze -->
                             <div class="text-center">
-                                <button type="submit" class="btn btn-red btn-lg px-5" id="analyzeBtn">
+                                <button type="submit" class="btn btn-red btn-lg px-5">
                                     <i class="bi bi-search me-2"></i>Analyze Food
                                 </button>
                             </div>
@@ -170,39 +146,94 @@
         </div>
     </footer>
 
-    <!-- Chart.js Graph Scripts -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ============= Chart.js Logic ============= -->
     <script>
-        // DAILY CHART
-        const dailyCtx = document.getElementById('dailyChart');
-        new Chart(dailyCtx, {
-            type: 'bar',
+        // DAILY BAR CHART
+        const dailyChart = new Chart(document.getElementById("dailyChart"), {
+            type: "bar",
             data: {
-                labels: {{ daily_labels | tojson }},
+                labels: {{ daily_labels | safe }},
                 datasets: [{
                     label: "Calories",
-                    data: {{ daily_calories_list | tojson }},
-                    borderWidth: 1
+                    data: {{ daily_calories_list | safe }},
                 }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        grace: "10%"
+                    }
+                }
             }
         });
 
-        // WEEKLY CHART
-        const weeklyCtx = document.getElementById('weeklyChart');
-        new Chart(weeklyCtx, {
-            type: 'line',
+        // WEEKLY LINE CHART
+        const weeklyChart = new Chart(document.getElementById("weeklyChart"), {
+            type: "line",
             data: {
-                labels: {{ weekly_labels | tojson }},
+                labels: {{ weekly_labels | safe }},
                 datasets: [{
-                    label: "Calories per Day",
-                    data: {{ weekly_values | tojson }},
-                    borderWidth: 2,
+                    label: "Weekly Calories",
+                    data: {{ weekly_values | safe }},
                     tension: 0.3
                 }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        grace: "10%"
+                    }
+                }
             }
         });
     </script>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- ============= Fix Choose File + Preview + Slider ============= -->
+    <script>
+        // Choose File Button
+        document.getElementById("chooseFileBtn").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+
+        // Image Preview
+        const fileInput = document.getElementById("fileInput");
+        const previewImg = document.getElementById("previewImg");
+        const imagePreview = document.getElementById("imagePreview");
+
+        fileInput.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewImg.src = e.target.result;
+                imagePreview.classList.remove("d-none");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Remove Image
+        document.getElementById("removeImageBtn").addEventListener("click", () => {
+            fileInput.value = "";
+            previewImg.src = "";
+            imagePreview.classList.add("d-none");
+        });
+
+        // Portion Slider Live Update
+        const portionSlider = document.getElementById("portionSize");
+        const portionLabel = document.getElementById("portionSizeValue");
+
+        portionSlider.addEventListener("input", () => {
+            portionLabel.textContent = portionSlider.value + "g";
+        });
+    </script>
 
 </body>
 </html>
